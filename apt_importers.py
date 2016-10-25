@@ -1,5 +1,7 @@
 import pandas as pd
 import struct
+import numpy as np
+
 
 def read_pos(f):
     """ Loads an APT .pos file as a pandas dataframe.
@@ -11,7 +13,7 @@ def read_pos(f):
         Da: mass/charge ratio of ion"""
     # read in the data
     n = len(file(f).read())/4
-    d = struct.unpack('>'+'f'*n,file(f).read(4*n))
+    d = struct.unpack('>'+'f'*n, file(f).read(4*n))
                     # '>' denotes 'big-endian' byte order
     # unpack data
     pos = pd.DataFrame({'x': d[0::4],
@@ -19,6 +21,23 @@ def read_pos(f):
                         'z': d[2::4],
                         'Da': d[3::4]})
     return pos
+
+
+def read_pos_numpy(file_path):
+    """
+    Look at read_pos function for further details.
+    :param file_path: file path
+    :return: numpy array
+    """
+    if file_path[-4:] is not ".pos":
+        raise ValueError("File Path does not end with .pos.")
+    with open(file_path, 'rb') as f:
+        # >f4 is big endian 4 byte float
+        dt_type = np.dtype({'names': ['x', 'y', 'z', 'Da'],
+                            'formats': ['>f4', '>f4', '>f4', '>f4']})
+        # returns a numpy array, where you can, for example, access all 'x' by pos_arr['x'] and so on
+        pos_arr = np.fromfile(f, dt_type, -1)
+    return pos_arr
 
 
 def read_epos(f):
@@ -72,6 +91,23 @@ def read_epos(f):
                         'pslep': d[9::11], # pulses since last event pulse
                         'ipp': d[10::11]}) # ions per pulse
     return pos
+
+
+def read_epos_numpy(file_path):
+    """
+    Look at read_epos function for further details.
+    :param file_path: file path
+    :return: numpy array
+    """
+    if file_path[-5:] is not ".epos":
+        raise ValueError("File Path does not end with .epos.")
+    with open(file_path, 'rb') as f:
+        # >f4 is big endian 4 byte float
+        dt_type = np.dtype({'names': ['x', 'y', 'z', 'Da', 'ns', 'Dc_kV', 'pulse_kV', 'det_x', 'det_y', 'pslep', 'ipp'],
+                            'formats': ['>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>f4', '>i4', '>i4']})
+        # returns a numpy array, where you can, for example, access all 'x' by pos_arr['x'] and so on
+        pos_arr = np.fromfile(f, dt_type, -1)
+    return pos_arr
 
 
 def read_rrng(f):
